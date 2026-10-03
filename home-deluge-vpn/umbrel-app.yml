@@ -1,0 +1,25 @@
+manifestVersion: 1.1
+id: home-deluge-vpn
+category: networking
+name: Deluge VPN
+version: "1.0.0"
+tagline: Deluge, das nur über das VPN ins Netz kommt
+icon: https://getumbrel.github.io/umbrel-apps-gallery/qbittorrent/icon.svg  # Platzhalter
+description: >-
+  Deluge im Netzwerk-Stack von Gluetun (Surfshark, WireGuard).
+releaseNotes: ""
+developer: Deluge / Gluetun
+website: https://deluge-torrent.org/
+dependencies: []
+repo: https://github.com/qdm12/gluetun
+support: https://github.com/qdm12/gluetun-wiki
+port: 8112
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: "deluge"
+torOnly: false
+permissions:
+  - STORAGE_DOWNLOADS
+submitter: home
+submission: ""

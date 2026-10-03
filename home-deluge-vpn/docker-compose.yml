@@ -1,0 +1,54 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # Deluge teilt sich das Netz mit gluetun, die Web-UI hängt also am gluetun-Container
+      APP_HOST: home-deluge-vpn_gluetun_1
+      APP_PORT: 8112
+
+  gluetun:
+    image: qmcgaw/gluetun:v3.41.3
+    # Ohne VPN-Daten (kommen erst nach der Installation) bleibt der Container oben,
+    # sperrt aber allen ausgehenden Verkehr, statt mit Fehler auszusteigen
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ -z "$${WIREGUARD_PRIVATE_KEY}" ] || [ -z "$${WIREGUARD_ADDRESSES}" ]; then
+          echo "VPN-Daten fehlen: App-Settings > Advanced > Custom variables (Service gluetun)."
+          iptables -P OUTPUT DROP || exit 1
+          iptables -P FORWARD DROP || exit 1
+          iptables -A OUTPUT -o lo -j ACCEPT || exit 1
+          ip6tables -P OUTPUT DROP 2>/dev/null
+          while true; do sleep 3600; done
+        fi
+        exec /gluetun-entrypoint
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=surfshark
+      - VPN_TYPE=wireguard
+      - SERVER_COUNTRIES=Netherlands
+      - FIREWALL_INPUT_PORTS=8112
+      - UPDATER_PERIOD=24h
+      - TZ=Europe/Berlin
+    volumes:
+      - ${APP_DATA_DIR}/data/gluetun:/gluetun
+    restart: on-failure
+
+  server:
+    image: lscr.io/linuxserver/deluge:latest
+    network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
